@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>CRUD com IndexedDB</title>
+	<script type="module">
+		await window.indexedDB.deleteDatabase("myDB");
+
+		// Abrindo ou criando um banco de dados
+		var db;
+		var request = indexedDB.open("myDB", 1);
+
+		request.onerror = function (event) {
+			console.log("Erro ao abrir o banco de dados.");
+		};
+
+		request.onupgradeneeded = function (event) {
+			db = event.target.result;
+			var objectStore = db.createObjectStore("people", { keyPath: "email" });
+			objectStore.createIndex("nome", "nome", { unique: false });
+			objectStore.createIndex("idade", "idade", { unique: false });
+			objectStore.createIndex("sexo", "sexo", { unique: false });
+		};
+
+		request.onsuccess = function (event) {
+			db = event.target.result;
+			console.log("Banco de dados aberto com sucesso.");
+
+			// Função para adicionar uma pessoa
+			function addPerson(nome, email, idade, sexo) {
+				var transaction = db.transaction(["people"], "readwrite");
+				var objectStore = transaction.objectStore("people");
+				var person = { nome: nome, email: email, idade: idade, sexo: sexo };
+				var request = objectStore.add(person);
+
+				request.onsuccess = function (event) {
+					console.log("Pessoa adicionada com sucesso.");
+				};
+
+				request.onerror = function (event) {
+					console.log("Erro ao adicionar pessoa.");
+				};
+			}
+
+			// Função para recuperar uma pessoa por email
+			function getPerson(email, callback) {
+				var transaction = db.transaction(["people"], "readonly");
+				var objectStore = transaction.objectStore("people");
+				var request = objectStore.get(email);
+
+				request.onsuccess = function (event) {
+					var person = request.result;
+					if (person) {
+						callback(person);
+					} else {
+						console.log("Pessoa não encontrada.");
+					}
+				};
+
+				request.onerror = function (event) {
+					console.log("Erro ao recuperar pessoa.");
+				};
+			}
+
+			// Função para atualizar uma pessoa
+			function updatePerson(email, newData) {
+				getPerson(email, function (person) {
+					var transaction = db.transaction(["people"], "readwrite");
+					var objectStore = transaction.objectStore("people");
+					var request = objectStore.put(newData);
+
+					request.onsuccess = function (event) {
+						console.log("Pessoa atualizada com sucesso.");
+					};
+
+					request.onerror = function (event) {
+						console.log("Erro ao atualizar pessoa.");
+					};
+				});
+			}
+
+			// Função para excluir uma pessoa
+			function deletePerson(email) {
+				var transaction = db.transaction(["people"], "readwrite");
+				var objectStore = transaction.objectStore("people");
+				var request = objectStore.delete(email);
+
+				request.onsuccess = function (event) {
+					console.log("Pessoa excluída com sucesso.");
+				};
+
+				request.onerror = function (event) {
+					console.log("Erro ao excluir pessoa.");
+				};
+			}
+
+			// Exemplo de uso
+			addPerson("João", "joao@example.com", 30, "M");
+			addPerson("Maria", "maria@example.com", 25, "F");
+
+			getPerson("joao@example.com", function (person) {
+				console.log("Pessoa encontrada:", person);
+			});
+
+			updatePerson("joao@example.com", { nome: "João Silva", email: "joao@example.com", idade: 31, sexo: "M" });
+
+			deletePerson("maria@example.com");
+		};
+	</script>
+</head>
+
+<body>
+
+</body>
+
+</html>

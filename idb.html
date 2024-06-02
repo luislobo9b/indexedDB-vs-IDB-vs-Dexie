@@ -1,0 +1,81 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>CRUD com IDB</title>
+	<script src="libs/idb.js" type="module"></script>
+	<script type="module">
+		const idb = {
+			deleteDB: window.deleteDB,
+			openDB: window.openDB,
+			unwrap: window.unwrap,
+			wrap: window.wrap,
+		}
+		window.idb = idb
+
+		await deleteDB('myDB');
+
+		// Abrindo ou criando um banco de dados
+		const dbPromise = idb.openDB('myDB', 1, {
+			upgrade(db) {
+				const peopleStore = db.createObjectStore('people', { keyPath: 'email' });
+				peopleStore.createIndex('nome', 'nome', { unique: false });
+				peopleStore.createIndex('idade', 'idade', { unique: false });
+				peopleStore.createIndex('sexo', 'sexo', { unique: false });
+			},
+		});
+
+		// Função para adicionar uma pessoa
+		async function addPerson(nome, email, idade, sexo) {
+			const db = await dbPromise;
+			const tx = db.transaction('people', 'readwrite');
+			const peopleStore = tx.objectStore('people');
+			await peopleStore.add({ nome, email, idade, sexo });
+		}
+
+		// Função para recuperar uma pessoa por email
+		async function getPerson(email) {
+			const db = await dbPromise;
+			const tx = db.transaction('people', 'readonly');
+			const peopleStore = tx.objectStore('people');
+			return peopleStore.get(email);
+		}
+
+		// Função para atualizar uma pessoa
+		async function updatePerson(email, newData) {
+			const db = await dbPromise;
+			const tx = db.transaction('people', 'readwrite');
+			const peopleStore = tx.objectStore('people');
+			await peopleStore.put(newData);
+		}
+
+		// Função para excluir uma pessoa
+		async function deletePerson(email) {
+			const db = await dbPromise;
+			const tx = db.transaction('people', 'readwrite');
+			const peopleStore = tx.objectStore('people');
+			await peopleStore.delete(email);
+		}
+
+		// Exemplo de uso
+		async function exampleUsage() {
+			await addPerson("João", "joao@example.com", 30, "M");
+			await addPerson("Maria", "maria@example.com", 25, "F");
+
+			const joao = await getPerson("joao@example.com");
+			console.log("Pessoa encontrada:", joao);
+
+			await updatePerson("joao@example.com", { nome: "João Silva", email: "joao@example.com", idade: 31, sexo: "M" });
+
+			await deletePerson("maria@example.com");
+		}
+
+		exampleUsage(); // Chamada do exemplo de uso
+	</script>
+</head>
+
+<body></body>
+
+</html>

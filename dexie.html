@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>CRUD com Dexie</title>
+	<script src="libs/dexie.js"></script>
+	<script type="module">
+		await Dexie.delete('myDB');
+
+		// Definição do banco de dados
+		const db = new Dexie('myDB');
+		db.version(1).stores({
+			people: 'email',
+		});
+
+		// Função para adicionar uma pessoa
+		async function addPerson(nome, email, idade, sexo) {
+			await db.people.add({ nome, email, idade, sexo });
+		}
+
+		// Função para recuperar uma pessoa por email
+		async function getPerson(email) {
+			return await db.people.get(email);
+		}
+
+		// Função para atualizar uma pessoa
+		async function updatePerson(email, newData) {
+			await db.people.update(email, newData);
+		}
+
+		// Função para excluir uma pessoa
+		async function deletePerson(email) {
+			await db.people.delete(email);
+		}
+
+		// Exemplo de uso
+		async function exampleUsage() {
+			await addPerson("João", "joao@example.com", 30, "M");
+			await addPerson("Maria", "maria@example.com", 25, "F");
+
+			const joao = await getPerson("joao@example.com");
+			console.log("Pessoa encontrada:", joao);
+
+			await updatePerson("joao@example.com", { nome: "João Silva", email: "joao@example.com", idade: 31, sexo: "M" });
+
+			await deletePerson("maria@example.com");
+		}
+
+		exampleUsage(); // Chamada do exemplo de uso
+	</script>
+</head>
+
+<body></body>
+
+</html>
